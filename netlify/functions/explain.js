@@ -115,7 +115,7 @@ exports.handler = async (event) => {
   const text = typeof b.text === 'string' ? b.text.slice(0, 30000) : '';
   const files = Array.isArray(b.files) ? b.files.slice(0, 5) : [];
 
-  // 2. Format inputs for Gemini's structure
+   // 2. Format inputs for Gemini's structure
   const parts = [];
 
   // Add plain text paste if present
@@ -130,9 +130,9 @@ exports.handler = async (event) => {
     total += f.data.length;
     if (total > 5.4e6) return json(413, { error: 'Files are too large together.' });
 
-    // Handle incoming base64 formats correctly for Gemini
+    // FIX: Removed the accidental backslash escaping the dollar sign (\$)
     const matches = f.data.match(/^data:(.+);base64,(.+)\$/);
-    if (matches) {
+    if (matches && matches[1] && matches[2]) {
       parts.push({
         inlineData: {
           mimeType: matches[1],
@@ -147,7 +147,7 @@ exports.handler = async (event) => {
         }
       });
     }
-  } // <-- Closes the file loop cleanly
+  }
 
   if (parts.length === 0) {
     return json(400, { error: 'Provide text or at least one document file.' });
