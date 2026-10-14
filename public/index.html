@@ -1,0 +1,812 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#2f6b4f">
+<title>ClearPaper: understand a government notice</title>
+<style>
+:root{
+  --paper:#f2f5f1; --sheet:#fbfcfa; --ink:#16231c; --muted:#5b6b62; --rule:#cdd7cf;
+  --green:#2f6b4f; --green-d:#214c38; --on-green:#fff;
+  --stamp:#27428f; --amber:#6f4700; --amber-bg:#f7ecd0; --red:#82272a; --red-bg:#f5e1df; --ok:#1f5c3c; --ok-bg:#ddeee3;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Devanagari","Noto Sans Bengali","Noto Sans Tamil",sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{--paper:#121a15; --sheet:#18221c; --ink:#e8efe9; --muted:#9fb0a5; --rule:#2c3a31;
+    --green:#5fae85; --green-d:#7cc7a0; --on-green:#0e1a13; --stamp:#9db3ff; --amber:#f0cf8a; --amber-bg:#3a2e12; --red:#f0b0b0; --red-bg:#3b1d1d; --ok:#a8dfc0; --ok-bg:#1b3527;}
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.55 var(--sans)}
+:focus-visible{outline:3px solid var(--stamp);outline-offset:2px}
+header.top{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem 1.5rem;max-width:760px;margin:0 auto;padding:1rem 1.25rem .5rem}
+.brand{font:700 1.35rem var(--serif);letter-spacing:-.01em}
+.brand small{display:block;font:400 .78rem var(--sans);color:var(--muted);letter-spacing:0}
+nav{display:flex;gap:1.25rem;margin-left:auto}
+nav button{background:none;border:0;border-bottom:3px solid transparent;padding:.35rem 0;font:inherit;font-weight:600;color:var(--muted);cursor:pointer}
+nav button.on{color:var(--ink);border-color:var(--green)}
+.codebox{flex-basis:100%;display:flex;gap:.5rem;align-items:center;font-size:.85rem;color:var(--muted)}
+.codebox input{font:inherit;padding:.25rem .5rem;border:1px solid var(--rule);border-radius:4px;background:var(--sheet);color:var(--ink);width:11rem}
+main{max-width:760px;margin:0 auto;padding:.5rem 1.25rem 4rem}
+h1{font:700 2.1rem/1.15 var(--serif);letter-spacing:-.015em;margin:1.2rem 0 .6rem}
+h2{font:700 1.35rem/1.25 var(--serif);margin:2rem 0 .5rem}
+h3{font:700 1.1rem/1.3 var(--serif);margin:1.8rem 0 .5rem;padding-top:1rem;border-top:1px solid var(--rule)}
+.lede{font-size:1.08rem;max-width:62ch;margin:0 0 1.4rem}
+.muted{color:var(--muted)}
+.panel{background:var(--sheet);border:1px solid var(--rule);border-radius:6px;padding:1.25rem}
+.panel+.panel{margin-top:1rem}
+.row{display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center;margin-bottom:1rem}
+select,textarea,input[type=text]{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:.45rem .6rem}
+textarea{width:100%;display:block}
+.btn{font:inherit;font-weight:600;padding:.6rem 1.1rem;border-radius:5px;border:1px solid var(--green);background:transparent;color:var(--green-d);cursor:pointer}
+.btn.primary{background:var(--green);color:var(--on-green)}
+.btn:disabled{opacity:.55;cursor:wait}
+.drop{border:2px dashed var(--rule);border-radius:6px;padding:1.4rem 1rem;text-align:center;display:grid;gap:.5rem;justify-items:center;background:var(--paper)}
+.drop.over{border-color:var(--green);background:var(--ok-bg)}
+#filelist{list-style:none;margin:.75rem 0 0;padding:0;display:grid;gap:.25rem}
+#filelist li{display:flex;justify-content:space-between;gap:1rem;font-size:.92rem;border-bottom:1px solid var(--rule);padding:.25rem 0}
+#filelist button{background:none;border:0;color:var(--red);cursor:pointer;font:inherit}
+details.paste{margin:1rem 0}
+details summary{cursor:pointer;font-weight:600}
+label.check{display:flex;gap:.65rem;align-items:flex-start;margin:1rem 0;font-size:.93rem}
+label.check input{margin-top:.3rem;flex:none}
+#msg,.msg{min-height:1.4rem;margin:.75rem 0 0;font-weight:600}
+.msg.err,#msg.err{color:var(--red)}
+.warn{background:var(--amber-bg);color:var(--amber);padding:.7rem .9rem;border-left:4px solid var(--amber);margin:1rem 0;border-radius:0 4px 4px 0}
+/* result */
+.hero{margin:1.6rem 0 0;padding:0 0 1rem}
+.hero .kind{color:var(--muted);font-size:.92rem}
+.oneline{font:600 1.35rem/1.35 var(--serif);margin:.25rem 0 0;max-width:34ch}
+ol.steps{list-style:none;counter-reset:s;margin:0;padding:0}
+ol.steps>li{counter-increment:s;display:grid;grid-template-columns:2.4rem 1fr;gap:0 .5rem;padding:1rem 0;border-bottom:1px solid var(--rule)}
+ol.steps>li::before{content:counter(s);font:700 1.6rem/1 var(--serif);color:var(--green)}
+.stepmain{font-weight:600;font-size:1.06rem}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin:.45rem 0 0}
+.chip{font-size:.82rem;padding:.12rem .55rem;border-radius:999px;font-weight:600}
+.chip.stated{background:var(--ok-bg);color:var(--ok)}
+.chip.depends{background:var(--amber-bg);color:var(--amber)}
+.chip.unclear{background:var(--red-bg);color:var(--red)}
+.chip.dl{background:transparent;color:var(--stamp);border:2px double var(--stamp);border-radius:3px;padding:.08rem .5rem}
+.note{font-size:.93rem;margin-top:.4rem}
+.src{margin-top:.55rem;font-size:.9rem;color:var(--muted);border-left:3px solid var(--rule);padding-left:.7rem}
+.src q{color:var(--ink);quotes:"\201C" "\201D"}
+.vbadge{display:inline-block;margin-left:.5rem;font-size:.78rem;font-weight:600}
+.vbadge.ok{color:var(--ok)} .vbadge.bad{color:var(--red)}
+.checklist{display:grid;gap:.5rem}
+.checklist label{display:flex;gap:.65rem;align-items:flex-start}
+.checklist input{margin-top:.35rem;width:1.1rem;height:1.1rem}
+dl.dates{display:grid;grid-template-columns:max-content 1fr;gap:.35rem 1.25rem;margin:0}
+dl.dates dt{font-weight:600} dl.dates dd{margin:0}
+.ask{padding:.6rem 0;border-bottom:1px solid var(--rule)}
+.ask b{display:block}
+table.terms{width:100%;border-collapse:collapse}
+table.terms th,table.terms td{text-align:left;vertical-align:top;padding:.45rem .6rem .45rem 0;border-bottom:1px solid var(--rule)}
+table.terms th{font-weight:700}
+.actions{display:flex;flex-wrap:wrap;gap:.6rem;margin:1.6rem 0 .5rem}
+.fine{font-size:.85rem;color:var(--muted);margin-top:1rem}
+pre.notice{white-space:pre-wrap;font:.95rem/1.5 var(--sans);margin:0;padding:.9rem 1rem;background:var(--paper);border:1px solid var(--rule);border-radius:4px}
+pre.tr{white-space:pre-wrap;font:.88rem/1.45 var(--sans);margin:.5rem 0 0}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:.25rem 1.25rem;padding:.7rem 0;border-bottom:1px solid var(--rule)}
+.pair .o{color:var(--muted);font-size:.93rem}
+@media (max-width:620px){.pair{grid-template-columns:1fr}h1{font-size:1.75rem}}
+/* study */
+fieldset.q{border:0;border-top:1px solid var(--rule);margin:1.2rem 0 0;padding:1rem 0 0}
+fieldset.q legend{font-weight:700;padding:0 .5rem 0 0;max-width:100%}
+label.opt{display:flex;gap:.65rem;align-items:flex-start;padding:.4rem 0}
+label.opt input{margin-top:.35rem;flex:none}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media (max-width:620px){.grid2{grid-template-columns:1fr}}
+.field{display:grid;gap:.25rem;margin-bottom:.9rem}
+.field>span{font-weight:600;font-size:.95rem}
+table.res{width:100%;border-collapse:collapse;font-size:.88rem;display:block;overflow-x:auto}
+table.res th,table.res td{padding:.3rem .6rem .3rem 0;text-align:left;border-bottom:1px solid var(--rule);white-space:nowrap}
+#log{font:.82rem/1.5 ui-monospace,Consolas,monospace;white-space:pre-wrap;color:var(--muted)}
+@media print{header.top,.actions,nav,.codebox{display:none}body{background:#fff;color:#000}}
+@media (prefers-reduced-motion:no-preference){.drop{transition:background .15s,border-color .15s}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">ClearPaper<small>A research prototype from the Making the State Understandable project</small></div>
+  <nav aria-label="Sections">
+    <button data-tab="use" class="on">Understand a notice</button>
+    <button data-tab="study">Join the pilot study</button>
+  </nav>
+  <div class="codebox"><label for="code">Access code</label><input id="code" type="text" autocomplete="off" placeholder="from the researcher"></div>
+</header>
+
+<main>
+
+<!-- ============ USE MODE ============ -->
+<section id="tab-use">
+  <h1>Find out what a government notice wants from you</h1>
+  <p class="lede">Add a photo, scan or PDF of a notice. ClearPaper lists the steps in order, the documents to prepare, and what the notice leaves unclear. Every step shows the line it came from, so you can check it against the original.</p>
+
+  <div class="panel">
+    <div class="row">
+      <label for="lang">Explain in</label>
+      <select id="lang">
+        <option value="en">English</option>
+        <option value="hi">हिन्दी (Hindi)</option>
+        <option value="bn">বাংলা (Bengali)</option>
+        <option value="mr">मराठी (Marathi)</option>
+        <option value="ta">தமிழ் (Tamil)</option>
+      </select>
+    </div>
+
+    <div id="drop" class="drop" tabindex="0">
+      <strong>Add photos or a PDF of the notice</strong>
+      <span class="muted">Up to 5 files. A PDF can be up to 4 MB. Several photos can be pages of one notice.</span>
+      <input id="file" type="file" accept="image/*,application/pdf" multiple hidden>
+      <button id="pick" type="button" class="btn">Choose files</button>
+    </div>
+    <ul id="filelist"></ul>
+
+    <details class="paste">
+      <summary>Or paste the notice text instead</summary>
+      <textarea id="pasted" rows="6" aria-label="Notice text"></textarea>
+    </details>
+
+    <label class="check">
+      <input type="checkbox" id="consent">
+      <span>I understand that this notice will be sent over the internet to an AI service so it can be read. ClearPaper does not save my files or text, but the AI service may keep requests for a limited time under its own data policy. I will cover Aadhaar, bank account or other ID numbers where I can.</span>
+    </label>
+
+    <button id="go" class="btn primary" type="button">Explain this notice</button>
+    <p id="msg" role="status" aria-live="polite"></p>
+  </div>
+
+  <div id="out" aria-live="polite"></div>
+</section>
+
+<!-- ============ STUDY MODE ============ -->
+<section id="tab-study" hidden>
+
+  <div id="st-consent" class="panel">
+    <h1>Pilot study: reading government notices</h1>
+    <p class="lede">You will read two short notices and answer five questions about each. It takes about ten minutes. The notices are made up, so you do not need any real documents.</p>
+    <p><strong>This is not a test of you.</strong> We are testing how well the notices and the tool communicate.</p>
+    <!-- REPLACE with your ethics-approved participant information and consent text -->
+    <div class="warn" id="consent-placeholder">Researcher: replace this paragraph with your ethics-approved information sheet and consent wording before recruiting anyone.</div>
+    <ul>
+      <li>Taking part is voluntary and you can stop at any time by closing this page.</li>
+      <li>We do not collect your name, phone number or email. Your answers are linked only to a random ID.</li>
+      <li>We record your answers, how long each task took, and the background answers you give next.</li>
+    </ul>
+    <label class="check"><input type="checkbox" id="st-consent-box"><span>I am 18 or older, I have read this, and I agree to take part.</span></label>
+    <button class="btn primary" id="st-agree" type="button">Continue</button>
+    <p class="msg err" id="st-consent-msg"></p>
+  </div>
+
+  <div id="st-demo" class="panel" hidden>
+    <h2 style="margin-top:0">A few questions about you</h2>
+    <form id="demo-form" novalidate>
+      <div class="grid2">
+        <label class="field"><span>Age</span><select name="age" required><option value="">Choose</option><option>18 to 25</option><option>26 to 40</option><option>41 to 60</option><option>Over 60</option></select></label>
+        <label class="field"><span>Highest education</span><select name="edu" required><option value="">Choose</option><option>Below Class 10</option><option>Class 10 to 12</option><option>Graduate</option><option>Postgraduate or higher</option></select></label>
+        <label class="field"><span>How easily do you read official letters in English?</span><select name="en_comf" required><option value="">Choose</option><option value="1">1 – with great difficulty</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5 – very easily</option></select></label>
+        <label class="field"><span>How easily do you read official letters in Hindi?</span><select name="hi_comf" required><option value="">Choose</option><option value="1">1 – with great difficulty</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5 – very easily</option></select></label>
+        <label class="field"><span>Have you dealt with government paperwork before?</span><select name="exp" required><option value="">Choose</option><option>Never</option><option>Once or twice</option><option>Several times</option><option>Regularly</option></select></label>
+        <label class="field"><span>Device you are using</span><select name="device" required><option value="">Choose</option><option>Phone</option><option>Computer</option><option>Tablet</option></select></label>
+      </div>
+      <label class="field"><span>If an explanation is shown, which language do you prefer?</span><select name="expl_lang" required><option value="">Choose</option><option value="en">English</option><option value="hi">हिन्दी (Hindi)</option></select></label>
+      <button class="btn primary" type="submit">Start the first notice</button>
+      <p class="msg err" id="demo-msg"></p>
+    </form>
+  </div>
+
+  <div id="st-round" hidden>
+    <h2 id="round-title" style="margin-top:1rem"></h2>
+    <p class="muted">Read the notice the way you would if it had been sent to you. You can look back at it while you answer.</p>
+    <p id="loading" class="msg" hidden>Loading the notice…</p>
+    <div id="materials"></div>
+    <form id="qform" hidden novalidate>
+      <h3>Questions</h3>
+      <div id="qlist"></div>
+      <fieldset class="q"><legend>How confident are you in your answers?</legend>
+        <div class="grid2" style="grid-template-columns:repeat(5,1fr)">
+          <label class="opt"><input type="radio" name="conf" value="1"><span>1 Not at all</span></label>
+          <label class="opt"><input type="radio" name="conf" value="2"><span>2</span></label>
+          <label class="opt"><input type="radio" name="conf" value="3"><span>3</span></label>
+          <label class="opt"><input type="radio" name="conf" value="4"><span>4</span></label>
+          <label class="opt"><input type="radio" name="conf" value="5"><span>5 Very</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="q"><legend>While answering, did you ask anyone or look anything up?</legend>
+        <label class="opt"><input type="radio" name="help" value="no"><span>No</span></label>
+        <label class="opt"><input type="radio" name="help" value="yes"><span>Yes</span></label>
+      </fieldset>
+      <label class="field" style="margin-top:1rem"><span>Anything confusing? (optional)</span><textarea name="comment" rows="3" maxlength="500"></textarea></label>
+      <button class="btn primary" type="submit">Submit answers</button>
+      <p class="msg err" id="qerr"></p>
+    </form>
+  </div>
+
+  <div id="st-between" class="panel" hidden>
+    <h2 style="margin-top:0">First notice done</h2>
+    <p>Thank you. One more notice to go. It is a different notice.</p>
+    <button class="btn primary" id="st-next" type="button">Start the second notice</button>
+  </div>
+
+  <div id="st-pref" class="panel" hidden>
+    <h2 style="margin-top:0">Last question</h2>
+    <form id="pref-form">
+      <fieldset class="q" style="border-top:0;margin-top:0;padding-top:0"><legend>Which notice was easier to know what to do about?</legend>
+        <label class="opt"><input type="radio" name="pref" value="first"><span>The first one</span></label>
+        <label class="opt"><input type="radio" name="pref" value="second"><span>The second one</span></label>
+        <label class="opt"><input type="radio" name="pref" value="same"><span>About the same</span></label>
+      </fieldset>
+      <button class="btn primary" type="submit">Finish and send my answers</button>
+      <p class="msg err" id="pref-msg"></p>
+    </form>
+  </div>
+
+  <div id="st-done" class="panel" hidden>
+    <h2 style="margin-top:0">Thank you</h2>
+    <p id="done-status"></p>
+    <div id="done-scores"></div>
+    <p class="muted">Your participant ID is <code id="done-pid"></code>. Quote it if you ever ask us to remove your answers.</p>
+  </div>
+</section>
+
+<!-- ============ RESEARCHER ============ -->
+<section id="tab-researcher" hidden>
+  <h1>Researcher tools</h1>
+  <p class="lede">Open this page at <code>/#researcher</code>. Nothing here is shown to participants.</p>
+
+  <div class="panel">
+    <h2 style="margin-top:0">1. Freeze the explanations</h2>
+    <p>For a fair comparison every participant must see the same explanation. Generate each one once, read it, then save it as <code>public/frozen.json</code> and redeploy.</p>
+    <div class="row">
+      <label><input type="checkbox" class="pgl" value="en" checked> English</label>
+      <label><input type="checkbox" class="pgl" value="hi" checked> Hindi</label>
+      <button class="btn primary" id="pregen" type="button">Generate all</button>
+      <button class="btn" id="dlfrozen" type="button">Download frozen.json</button>
+    </div>
+    <div class="row"><label for="prev-sel">Preview</label><select id="prev-sel"><option value="">Choose an output</option></select></div>
+    <div id="prev"></div>
+    <div id="log"></div>
+  </div>
+
+  <div class="panel">
+    <h2 style="margin-top:0">2. Responses stored in this browser</h2>
+    <p class="muted">Participants' responses are sent to your Netlify Forms inbox (form name <code>pilot-results</code>). This table only shows sessions run on this device, such as your own test runs.</p>
+    <div id="localres"></div>
+    <div class="row"><button class="btn" id="dlcsv" type="button">Download CSV</button><button class="btn" id="clearres" type="button">Clear local results</button></div>
+  </div>
+</section>
+
+</main>
+
+<!-- Netlify Forms registration (must exist in the static HTML) -->
+<form name="pilot-results" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
+  <input name="bot-field"><input name="pid"><textarea name="payload"></textarea>
+</form>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+function h(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const norm = s => (s || '').toLowerCase().replace(/[\s\u200b]+/g, ' ').replace(/[“”"'‘’.,;:()\[\]]/g, '').trim();
+const verified = (q, src) => !!q && norm(src).includes(norm(q));
+const params = new URLSearchParams(location.search);
+
+/* ---------- tabs + access code ---------- */
+function showTab(name) {
+  ['use', 'study', 'researcher'].forEach(t => { $('#tab-' + t).hidden = t !== name; });
+  $$('nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+  if (name === 'researcher') refreshResearcher();
+}
+$$('nav button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+if (location.hash === '#researcher') showTab('researcher');
+if (params.get('tab') === 'study') showTab('study');
+
+if (params.get('code')) sessionStorage.setItem('cp_code', params.get('code'));
+const codeInput = $('#code');
+codeInput.value = sessionStorage.getItem('cp_code') || '';
+codeInput.addEventListener('input', () => sessionStorage.setItem('cp_code', codeInput.value.trim()));
+
+async function callExplain(payload) {
+  const code = sessionStorage.getItem('cp_code') || '';
+  let r;
+  try {
+    r = await fetch('/.netlify/functions/explain', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...payload, code })
+    });
+  } catch { throw new Error('Could not reach the server. Check your internet connection.'); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ('Server error ' + r.status));
+  return j.result;
+}
+
+/* ---------- rendering the explanation ---------- */
+const L0 = {
+  do_this: 'What to do, in order', documents: 'Documents to get ready', dates: 'Important dates',
+  unclear: 'Not clear in this notice. Ask the office.', ask_whom: 'Ask', suggested_question: 'You could say',
+  if_not_done: 'If this is not done', help: 'If you disagree or need help', terms: 'Official words in this notice',
+  from_notice: 'From the notice', found: '✓ wording found in the notice', notfound: '⚠ could not match this wording, check the original',
+  stated: 'Stated in the notice', depends: 'Depends on your situation', unclear_chip: 'Not clear, ask the office', deadline: 'By'
+};
+const lab = (d, k) => (d.labels && d.labels[k]) || L0[k];
+
+function section(root, title) { root.append(h('h3', null, title)); }
+
+function renderAction(d, src) {
+  const root = h('div', 'result');
+  if (d.readability_warning) root.append(h('div', 'warn', d.readability_warning));
+
+  const hero = h('div', 'hero');
+  if (d.doc_type) hero.append(h('div', 'kind', d.doc_type));
+  if (d.issuer) hero.append(h('div', 'kind', d.issuer));
+  hero.append(h('p', 'oneline', d.one_line || ''));
+  root.append(hero);
+
+  const steps = (d.actions || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+  if (steps.length) {
+    section(root, lab(d, 'do_this'));
+    const ol = h('ol', 'steps');
+    steps.forEach(s => {
+      const li = h('li');
+      const body = h('div');
+      body.append(h('div', 'stepmain', s.action || ''));
+      if (s.detail) body.append(h('div', 'note', s.detail));
+      const chips = h('div', 'chips');
+      if (s.deadline) chips.append(h('span', 'chip dl', lab(d, 'deadline') + ' ' + s.deadline));
+      const c = ['stated', 'depends', 'unclear'].includes(s.certainty) ? s.certainty : 'unclear';
+      chips.append(h('span', 'chip ' + c, lab(d, c === 'unclear' ? 'unclear_chip' : c)));
+      body.append(chips);
+      if (s.certainty_note) body.append(h('div', 'note', s.certainty_note));
+      if (s.source_quote) {
+        const q = h('div', 'src');
+        q.append(h('span', null, lab(d, 'from_notice') + ': '));
+        q.append(h('q', null, s.source_quote));
+        const ok = verified(s.source_quote, src);
+        q.append(h('span', 'vbadge ' + (ok ? 'ok' : 'bad'), ok ? lab(d, 'found') : lab(d, 'notfound')));
+        body.append(q);
+      }
+      li.append(body); ol.append(li);
+    });
+    root.append(ol);
+  }
+
+  if ((d.documents || []).length) {
+    section(root, lab(d, 'documents'));
+    const box = h('div', 'checklist');
+    d.documents.forEach(x => {
+      const lb = h('label'); const cb = document.createElement('input'); cb.type = 'checkbox';
+      lb.append(cb, h('span', null, x.name + (x.note ? ': ' + x.note : '')));
+      box.append(lb);
+    });
+    root.append(box);
+  }
+
+  if ((d.key_dates || []).length) {
+    section(root, lab(d, 'dates'));
+    const dl = h('dl', 'dates');
+    d.key_dates.forEach(k => { dl.append(h('dt', null, k.label), h('dd', null, k.date_text + (k.note ? ' (' + k.note + ')' : ''))); });
+    root.append(dl);
+  }
+
+  if ((d.unclear || []).length) {
+    section(root, lab(d, 'unclear'));
+    d.unclear.forEach(u => {
+      const a = h('div', 'ask'); a.append(h('b', null, u.issue));
+      if (u.ask_whom) a.append(h('div', null, lab(d, 'ask_whom') + ': ' + u.ask_whom));
+      if (u.suggested_question) a.append(h('div', 'muted', lab(d, 'suggested_question') + ': “' + u.suggested_question + '”'));
+      root.append(a);
+    });
+  }
+
+  if (d.if_not_done) { section(root, lab(d, 'if_not_done')); root.append(h('p', null, d.if_not_done)); }
+  if (d.help) { section(root, lab(d, 'help')); root.append(h('p', null, d.help)); }
+
+  if ((d.glossary || []).length) {
+    section(root, lab(d, 'terms'));
+    const t = h('table', 'terms');
+    d.glossary.forEach(g => { const tr = h('tr'); tr.append(h('th', null, g.official_term), h('td', null, g.plain_meaning)); t.append(tr); });
+    root.append(t);
+  }
+  return root;
+}
+
+function renderTranslation(d) {
+  const root = h('div', 'result');
+  (d.pairs || []).forEach(p => {
+    const row = h('div', 'pair');
+    row.append(h('div', 'o', p.original), h('div', null, p.plain));
+    root.append(row);
+  });
+  return root;
+}
+
+function toText(d) {
+  const out = [];
+  if (d.one_line) out.push(d.one_line, '');
+  (d.actions || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0)).forEach((s, i) => {
+    out.push(`${i + 1}. ${s.action}${s.deadline ? ' (' + lab(d, 'deadline') + ' ' + s.deadline + ')' : ''}`);
+  });
+  if ((d.documents || []).length) { out.push('', lab(d, 'documents') + ':'); d.documents.forEach(x => out.push('- ' + x.name)); }
+  if ((d.unclear || []).length) { out.push('', lab(d, 'unclear') + ':'); d.unclear.forEach(u => out.push('- ' + u.issue)); }
+  out.push('', 'ClearPaper (research prototype). Check the original notice.');
+  return out.join('\n');
+}
+
+/* ---------- USE MODE ---------- */
+const SPEECH = { en: 'en-IN', hi: 'hi-IN', bn: 'bn-IN', mr: 'mr-IN', ta: 'ta-IN' };
+let files = [];
+const MAX_FILES = 5;
+
+function msg(t, err) { const m = $('#msg'); m.textContent = t || ''; m.className = err ? 'err' : ''; }
+function refreshFiles() {
+  const ul = $('#filelist'); ul.replaceChildren();
+  files.forEach((f, i) => {
+    const li = h('li'); li.append(h('span', null, f.name));
+    const b = h('button', null, 'Remove'); b.type = 'button'; b.addEventListener('click', () => { files.splice(i, 1); refreshFiles(); });
+    li.append(b); ul.append(li);
+  });
+}
+function addFiles(list) {
+  for (const f of list) { if (files.length < MAX_FILES) files.push(f); }
+  refreshFiles();
+}
+$('#pick').addEventListener('click', () => $('#file').click());
+$('#file').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+const drop = $('#drop');
+['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => addFiles(e.dataTransfer.files));
+
+function toB64(f) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).split(',')[1]);
+    r.onerror = () => rej(new Error('Could not read ' + f.name));
+    r.readAsDataURL(f);
+  });
+}
+function shrink(f) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(f); const img = new Image();
+    img.onload = () => {
+      const sc = Math.min(1, 1800 / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg', 0.85).split(',')[1]);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('Could not open ' + f.name + '. Please use a JPG or PNG photo.')); };
+    img.src = url;
+  });
+}
+async function prepare(f) {
+  if (f.type === 'application/pdf') {
+    if (f.size > 4 * 1024 * 1024) throw new Error(f.name + ' is over 4 MB. Try a smaller PDF, or photograph the main pages.');
+    return { media_type: 'application/pdf', data: await toB64(f) };
+  }
+  if (f.type.startsWith('image/')) return { media_type: 'image/jpeg', data: await shrink(f) };
+  throw new Error(f.name + ' is not a photo or PDF.');
+}
+
+let speaking = false;
+function wireResultActions(container, d, lang) {
+  const bar = h('div', 'actions');
+  if ('speechSynthesis' in window) {
+    const b = h('button', 'btn', 'Read aloud'); b.type = 'button';
+    b.addEventListener('click', () => {
+      if (speaking) { speechSynthesis.cancel(); speaking = false; b.textContent = 'Read aloud'; return; }
+      const u = new SpeechSynthesisUtterance(toText(d)); u.lang = SPEECH[lang] || 'en-IN';
+      u.onend = () => { speaking = false; b.textContent = 'Read aloud'; };
+      speaking = true; b.textContent = 'Stop'; speechSynthesis.speak(u);
+    });
+    bar.append(b);
+  }
+  const c = h('button', 'btn', 'Copy as text'); c.type = 'button';
+  c.addEventListener('click', async () => { try { await navigator.clipboard.writeText(toText(d)); c.textContent = 'Copied'; setTimeout(() => c.textContent = 'Copy as text', 1500); } catch { c.textContent = 'Copy failed'; } });
+  const p = h('button', 'btn', 'Print'); p.type = 'button'; p.addEventListener('click', () => window.print());
+  bar.append(c, p);
+  container.append(bar);
+}
+
+$('#go').addEventListener('click', async () => {
+  msg('');
+  const text = $('#pasted').value.trim();
+  if (!files.length && !text) return msg('Add a photo or PDF, or paste the notice text.', true);
+  if (!$('#consent').checked) return msg('Please tick the box to confirm you understand how your notice is processed.', true);
+  const btn = $('#go'); btn.disabled = true; msg('Reading your notice. This can take up to a minute.');
+  $('#out').replaceChildren();
+  try {
+    const prepared = await Promise.all(files.map(prepare));
+    const lang = $('#lang').value;
+    const d = await callExplain({ mode: 'action', lang, text, files: prepared });
+    const src = d.transcript || text;
+    const out = $('#out'); out.append(renderAction(d, src));
+    wireResultActions(out, d, lang);
+    const det = h('details'); det.append(h('summary', null, 'Text ClearPaper read from your document (check it against the original)'));
+    det.append(h('pre', 'notice', d.transcript || text)); out.append(det);
+    out.append(h('p', 'fine', 'ClearPaper is a research prototype. It explains what a notice says; it is not legal advice and can make mistakes. Check the original notice and confirm with the issuing office before acting.'));
+    msg('');
+    out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) { msg(e.message, true); }
+  btn.disabled = false;
+});
+
+/* ---------- STUDY: notices ---------- */
+const NOTICES = {
+  N1: {
+    title: 'Income certificate: incomplete application',
+    text:
+`OFFICE OF THE TEHSILDAR, PRATAPGARH TEHSIL (FICTIONAL)
+No. TEH/IC/2026/4471                                  Date: 08/10/2026
+
+To,
+The Applicant (Application ID: IC-26-009213)
+
+Subject: Deficiency in application for issue of Income Certificate.
+
+With reference to your application dated 28.09.2026, it is informed that the application has been examined and found incomplete. The following deficiencies have been noted:
+(1) Self-declaration of annual income in the prescribed format is not attached.
+(2) Proof of ordinary residence (ration card, voter ID, or electricity bill not older than three months) is not attached.
+
+You are directed to remove the above deficiencies and submit the requisite documents at the Tehsil Facilitation Counter within 15 days of receipt of this notice, failing which the application shall be liable to be rejected without further notice. Applicants whose Patwari report is already on file need not resubmit item (2), where applicable.
+
+Tehsildar`,
+    qs: [
+      { id: 'q1', q: 'What is the main purpose of this notice?', ans: 'b', o: [['a', 'Your income certificate is ready for collection'], ['b', 'Your application is incomplete and needs more documents'], ['c', 'You are asked to pay a fee'], ['d', 'Your application has been rejected']] },
+      { id: 'q2', q: 'What must you submit?', ans: 'b', o: [['a', 'Only a ration card'], ['b', 'A self-declaration of income in the prescribed format, and a proof of residence'], ['c', 'A Patwari report and bank statements'], ['d', 'Nothing. No documents are needed.']] },
+      { id: 'q3', q: 'What is the deadline?', ans: 'b', o: [['a', '15 days from 8 October 2026'], ['b', '15 days from the day you receive the notice (the receipt date is not stated)'], ['c', '15 October 2026'], ['d', 'There is no deadline']] },
+      { id: 'q4', q: 'Where must the documents be submitted?', ans: 'a', o: [['a', 'Tehsil Facilitation Counter'], ['b', 'Online portal only'], ['c', 'By post to the District Collector'], ['d', 'The notice does not say']] },
+      { id: 'q5', q: 'What does the notice say about people whose Patwari report is on file?', ans: 'b', o: [['a', 'They must resubmit everything'], ['b', 'They may not need to resubmit the residence proof, where applicable'], ['c', 'Their application is approved automatically'], ['d', 'The notice says nothing about this']] }
+    ]
+  },
+  N2: {
+    title: 'Ration card verification',
+    text:
+`DEPARTMENT OF FOOD AND CIVIL SUPPLIES, DISTRICT OFFICE (FICTIONAL)
+Ref: DFCS/RC/2026/1182                                  Date: 03.10.2026
+
+Subject: Verification of ration card details
+
+Under the provisions of the applicable Food Security Order, household verification is to be conducted for ration card no. RC-5530921. The head of the household or an authorised member shall appear before the Fair Price Shop Inspector on 21.10.2026 between 10:00 AM and 4:00 PM, carrying the original Aadhaar card of every member listed on the card and the passbook of a bank account seeded with Aadhaar.
+
+Cards for which verification is not completed may be placed under temporary suspension of entitlements. Members who are away for employment may submit Form-7 through an authorised representative. No fee is payable.
+
+District Supply Officer`,
+    qs: [
+      { id: 'q1', q: 'What is the main purpose of this notice?', ans: 'b', o: [['a', 'A new ration card has been issued'], ['b', 'Your household details will be verified'], ['c', 'Your ration card has been cancelled'], ['d', 'You must pay a fee to renew the card']] },
+      { id: 'q2', q: 'What action does the notice ask for?', ans: 'a', o: [['a', 'Appear before the Fair Price Shop Inspector on 21.10.2026 between 10 AM and 4 PM'], ['b', 'Send documents by post before 21.10.2026'], ['c', 'Appear at any time in October'], ['d', 'Do nothing unless contacted again']] },
+      { id: 'q3', q: 'What must you carry?', ans: 'a', o: [['a', 'Original Aadhaar of every member on the card, and a bank passbook (account seeded with Aadhaar)'], ['b', 'Only the ration card'], ['c', 'Photocopies of the head of household’s PAN card'], ['d', 'A fee receipt']] },
+      { id: 'q4', q: 'What may happen if verification is not completed?', ans: 'b', o: [['a', 'The card is cancelled immediately'], ['b', 'Entitlements may be temporarily suspended'], ['c', 'A fine is charged'], ['d', 'Nothing happens']] },
+      { id: 'q5', q: 'What important information is missing or unclear?', ans: 'a', o: [['a', 'Where the verification will take place (only “before the Fair Price Shop Inspector” is stated)'], ['b', 'The date of verification'], ['c', 'The documents to carry'], ['d', 'Nothing is missing']] }
+    ]
+  },
+  N3: {
+    title: 'Scholarship: bank details discrepancy',
+    text:
+`TRIBAL AREA DEVELOPMENT DEPARTMENT, SCHOLARSHIP CELL (FICTIONAL)
+No. TAD/SCH/2026/907                                    Dated: 12-10-2026
+
+To,
+The Student (Application No. PMS-26-33480), through the Principal, Government College (Fictional)
+
+Subject: Discrepancy in bank details: disbursal of scholarship.
+
+It is noticed that the name on the bank account furnished by you does not match the name on your application. The disbursal of the instalment is accordingly kept in abeyance.
+
+You are requested to upload on the scholarship portal, by 31.10.2026, a copy of the first page of your bank passbook showing your name, attested by the Principal. The college shall forward the verified record to this office. If the discrepancy is not resolved, the amount may be returned to the Department.
+
+If aggrieved by this decision, you may file a representation to the Director within 30 days.
+
+Scholarship Officer`,
+    qs: [
+      { id: 'q1', q: 'What is the main purpose of this notice?', ans: 'b', o: [['a', 'Your scholarship has been cancelled'], ['b', 'Your payment is on hold because the bank account name does not match'], ['c', 'Your scholarship has been increased'], ['d', 'You must repay money you received']] },
+      { id: 'q2', q: 'What action does the notice ask for?', ans: 'a', o: [['a', 'Upload an attested copy of the first page of your passbook on the portal'], ['b', 'Visit the Director’s office'], ['c', 'Open a new bank account'], ['d', 'Submit a fresh application']] },
+      { id: 'q3', q: 'What is the deadline for that action?', ans: 'a', o: [['a', '31 October 2026'], ['b', '30 days from 12 October 2026'], ['c', '12 October 2026'], ['d', 'No deadline is given']] },
+      { id: 'q4', q: 'Who must attest the passbook copy?', ans: 'b', o: [['a', 'The bank manager'], ['b', 'The Principal'], ['c', 'The Scholarship Officer'], ['d', 'Any gazetted officer you choose']] },
+      { id: 'q5', q: 'What important information is missing or unclear?', ans: 'a', o: [['a', 'How and where to file a representation, and from which date the 30 days are counted'], ['b', 'The upload deadline'], ['c', 'The name of the department'], ['d', 'Nothing is missing']] }
+    ]
+  }
+};
+
+/* ---------- STUDY: frozen explanations ---------- */
+let FROZEN = {};
+fetch('/frozen.json').then(r => r.ok ? r.json() : {}).then(j => { FROZEN = j || {}; }).catch(() => {});
+const cacheGet = () => store.get('cp_cache', {});
+async function getExplanation(nid, cond, lang, force) {
+  const key = `${nid}|${cond}|${lang}`;
+  if (!force) {
+    if (FROZEN[key]) return { data: FROZEN[key], src: 'frozen' };
+    const c = cacheGet(); if (c[key]) return { data: c[key], src: 'cache' };
+  }
+  const data = await callExplain({ mode: cond === 'B' ? 'translation' : 'action', lang, text: NOTICES[nid].text });
+  const c = cacheGet(); c[key] = data; store.set('cp_cache', c);
+  return { data, src: 'live' };
+}
+
+/* ---------- STUDY: flow ---------- */
+const ST = { pid: null, demo: {}, plan: [], i: 0, results: [], t0: 0, tFirst: null, cur: null };
+const PANELS = ['consent', 'demo', 'round', 'between', 'pref', 'done'];
+function stShow(p) { PANELS.forEach(x => { $('#st-' + x).hidden = x !== p; }); window.scrollTo(0, 0); }
+function genPid() { return Array.from(crypto.getRandomValues(new Uint8Array(6))).map(b => b.toString(36).padStart(2, '0')).join('').slice(0, 9); }
+
+$('#st-agree').addEventListener('click', () => {
+  if (!$('#st-consent-box').checked) { $('#st-consent-msg').textContent = 'Please tick the box to continue.'; return; }
+  ST.pid = genPid(); stShow('demo');
+});
+
+function makePlan() {
+  const pair = (params.get('pair') || '').toUpperCase();
+  const conds = /^[ABC]{2}$/.test(pair) && pair[0] !== pair[1] ? pair.split('') : shuffle(['A', 'B', 'C']).slice(0, 2);
+  const nids = shuffle(Object.keys(NOTICES)).slice(0, 2);
+  return nids.map((n, i) => ({ notice: n, cond: conds[i] }));
+}
+
+$('#demo-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const fd = new FormData(e.target); const demo = {};
+  for (const k of ['age', 'edu', 'en_comf', 'hi_comf', 'exp', 'device', 'expl_lang']) {
+    const v = fd.get(k); if (!v) { $('#demo-msg').textContent = 'Please answer every question.'; return; }
+    demo[k] = v;
+  }
+  ST.demo = demo; ST.plan = makePlan(); ST.i = 0; ST.results = [];
+  startRound();
+});
+
+function buildQuestions(N) {
+  const box = $('#qlist'); box.replaceChildren();
+  N.qs.forEach((q, qi) => {
+    const fs = h('fieldset', 'q'); fs.append(h('legend', null, `${qi + 1}. ${q.q}`));
+    shuffle(q.o).concat([['unsure', 'I’m not sure']]).forEach(([id, t]) => {
+      const lb = h('label', 'opt'); const r = document.createElement('input');
+      r.type = 'radio'; r.name = q.id; r.value = id;
+      r.addEventListener('change', () => { if (ST.tFirst == null) ST.tFirst = performance.now(); });
+      lb.append(r, h('span', null, t)); fs.append(lb);
+    });
+    box.append(fs);
+  });
+}
+
+async function startRound() {
+  const plan = ST.plan[ST.i]; const N = NOTICES[plan.notice];
+  stShow('round');
+  $('#round-title').textContent = `Notice ${ST.i + 1} of ${ST.plan.length}`;
+  $('#qerr').textContent = '';
+  const mat = $('#materials'); mat.replaceChildren();
+  $('#qform').hidden = true; $('#loading').hidden = false;
+
+  const orig = h('div', 'panel'); orig.append(h('h2', null, 'The notice')); orig.append(h('pre', 'notice', N.text)); orig.firstChild.style.marginTop = '0';
+  mat.append(orig);
+
+  let from = 'none';
+  if (plan.cond !== 'A') {
+    try {
+      const lang = ST.demo.expl_lang || 'en';
+      const { data, src } = await getExplanation(plan.notice, plan.cond, lang);
+      from = src;
+      const box = h('div', 'panel'); const hd = h('h2', null, plan.cond === 'B' ? 'In simple words' : 'What this means for you');
+      hd.style.marginTop = '0'; box.append(hd);
+      box.append(plan.cond === 'B' ? renderTranslation(data) : renderAction(data, N.text));
+      mat.append(box);
+    } catch (e) {
+      $('#loading').hidden = true;
+      mat.append(h('div', 'warn', 'The explanation could not be loaded (' + e.message + '). Please tell the researcher.'));
+      return;
+    }
+  }
+  buildQuestions(N);
+  $('#qform').reset();
+  $('#loading').hidden = true; $('#qform').hidden = false;
+  ST.cur = { plan, from, lang: plan.cond === 'A' ? null : (ST.demo.expl_lang || 'en') };
+  ST.t0 = performance.now(); ST.tFirst = null;
+}
+
+$('#qform').addEventListener('submit', e => {
+  e.preventDefault();
+  const fd = new FormData(e.target); const N = NOTICES[ST.cur.plan.notice];
+  const answers = {}, correct = {}; let nc = 0, ns = 0;
+  for (const q of N.qs) {
+    const v = fd.get(q.id);
+    if (!v) { $('#qerr').textContent = 'Please answer every question. You can choose “I’m not sure”.'; return; }
+    answers[q.id] = v; const ok = v === q.ans; correct[q.id] = ok; if (ok) nc++; if (v === 'unsure') ns++;
+  }
+  const conf = fd.get('conf'), help = fd.get('help');
+  if (!conf || !help) { $('#qerr').textContent = 'Please answer the confidence and help questions.'; return; }
+  ST.results.push({
+    round: ST.i + 1, notice: ST.cur.plan.notice, cond: ST.cur.plan.cond, expl_lang: ST.cur.lang, rendered_from: ST.cur.from,
+    answers, correct, n_correct: nc, n_unsure: ns, n_questions: N.qs.length,
+    time_total_ms: Math.round(performance.now() - ST.t0),
+    time_first_answer_ms: ST.tFirst == null ? null : Math.round(ST.tFirst - ST.t0),
+    confidence: +conf, outside_help: help, comment: String(fd.get('comment') || '').slice(0, 500)
+  });
+  ST.i++;
+  if (ST.i < ST.plan.length) stShow('between'); else stShow('pref');
+});
+$('#st-next').addEventListener('click', startRound);
+
+async function sendResults(pref) {
+  const payload = { app: 'clearpaper-0.2', pid: ST.pid, finished: new Date().toISOString(), demo: ST.demo, rounds: ST.results, preference: pref };
+  const all = store.get('cp_results', []); all.push(payload); store.set('cp_results', all);
+  try {
+    const body = new URLSearchParams({ 'form-name': 'pilot-results', pid: ST.pid, payload: JSON.stringify(payload) });
+    const r = await fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
+    return r.ok;
+  } catch { return false; }
+}
+
+$('#pref-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const pref = new FormData(e.target).get('pref');
+  if (!pref) { $('#pref-msg').textContent = 'Please choose one.'; return; }
+  const btn = e.target.querySelector('button'); btn.disabled = true;
+  const ok = await sendResults(pref);
+  btn.disabled = false;
+  stShow('done');
+  $('#done-status').textContent = ok ? 'Your answers have been sent. You can close this page.' : 'Your answers could not be sent from this device. Please tell the researcher so they can collect them.';
+  const sc = $('#done-scores'); sc.replaceChildren();
+  ST.results.forEach(r => sc.append(h('p', null, `Notice ${r.round}: ${r.n_correct} of ${r.n_questions} answers matched the notice.`)));
+  $('#done-pid').textContent = ST.pid;
+});
+
+/* ---------- RESEARCHER ---------- */
+const esc = v => { v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+function csvRows() {
+  const head = ['pid', 'age', 'edu', 'en_comf', 'hi_comf', 'exp', 'device', 'expl_lang', 'round', 'notice', 'cond', 'rendered_from',
+    'n_correct', 'n_unsure', 'n_questions', 'time_total_ms', 'time_first_answer_ms', 'confidence', 'outside_help', 'preference', 'comment'];
+  const rows = [head];
+  store.get('cp_results', []).forEach(p => p.rounds.forEach(r => rows.push([
+    p.pid, p.demo.age, p.demo.edu, p.demo.en_comf, p.demo.hi_comf, p.demo.exp, p.demo.device, r.expl_lang, r.round, r.notice, r.cond, r.rendered_from,
+    r.n_correct, r.n_unsure, r.n_questions, r.time_total_ms, r.time_first_answer_ms, r.confidence, r.outside_help, p.preference, r.comment])));
+  return rows;
+}
+function download(name, text, type) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function refreshResearcher() {
+  const rows = csvRows(); const box = $('#localres'); box.replaceChildren();
+  if (rows.length === 1) box.append(h('p', 'muted', 'No local sessions yet.'));
+  else {
+    const t = h('table', 'res');
+    rows.forEach((r, i) => { const tr = h('tr'); r.slice(0, 20).forEach(c => tr.append(h(i ? 'td' : 'th', null, c == null ? '' : String(c)))); t.append(tr); });
+    box.append(t);
+  }
+  const sel = $('#prev-sel'); const keep = sel.value; sel.replaceChildren(h('option', null, 'Choose an output')); sel.firstChild.value = '';
+  Object.keys({ ...FROZEN, ...cacheGet() }).sort().forEach(k => { const o = h('option', null, k); o.value = k; sel.append(o); });
+  sel.value = keep;
+}
+$('#prev-sel').addEventListener('change', e => {
+  const k = e.target.value; const box = $('#prev'); box.replaceChildren(); if (!k) return;
+  const [nid, cond] = k.split('|'); const d = { ...FROZEN, ...cacheGet() }[k];
+  box.append(cond === 'B' ? renderTranslation(d) : renderAction(d, NOTICES[nid].text));
+});
+$('#dlcsv').addEventListener('click', () => download('clearpaper-local-results.csv', csvRows().map(r => r.map(esc).join(',')).join('\n'), 'text/csv'));
+$('#clearres').addEventListener('click', () => { if (confirm('Clear results stored in this browser?')) { store.set('cp_results', []); refreshResearcher(); } });
+$('#dlfrozen').addEventListener('click', () => download('frozen.json', JSON.stringify({ ...FROZEN, ...cacheGet() }, null, 1), 'application/json'));
+$('#pregen').addEventListener('click', async () => {
+  const langs = $$('.pgl:checked').map(x => x.value); const log = $('#log'); log.textContent = '';
+  const btn = $('#pregen'); btn.disabled = true;
+  for (const n of Object.keys(NOTICES)) for (const c of ['B', 'C']) for (const l of langs) {
+    log.textContent += `Generating ${n} / ${c} / ${l} … `;
+    try { await getExplanation(n, c, l, true); log.textContent += 'ok\n'; } catch (e) { log.textContent += 'failed: ' + e.message + '\n'; }
+  }
+  log.textContent += 'Finished. Preview each output, then download frozen.json.\n';
+  btn.disabled = false; refreshResearcher();
+});
+
+})();
+</script>
+</body>
+</html>
