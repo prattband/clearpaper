@@ -3,7 +3,8 @@
 // Nothing is logged or stored here on purpose (documents may contain personal data).
 
 const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-const API = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+const FALLBACK = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash';
+const urlFor = (m) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`;
 
 const LANGS = {
   en: 'English',
@@ -134,20 +135,28 @@ exports.handler = async (event) => {
 
   // 4. Call Gemini (key goes in a header, never in the URL)
   try {
-    const response = await fetch(API, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': key
-      },
-      body: JSON.stringify(payload)
-    });
+    // Try the main model, then the fallback if Google is overloaded (503) or rate limiting (429).
+    let response;
+    let usedModel = MODEL;
+    for (const m of [MODEL, FALLBACK]) {
+      usedModel = m;
+      response = await fetch(urlFor(m), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': key
+        },
+        body: JSON.stringify(payload)
+      });
+      if (response.status !== 503 && response.status !== 429) break;
+      await new Promise((r) => setTimeout(r, 1000));
+    }
 
     if (!response.ok) {
       // Log status only, never document content. Do not echo Gemini's raw error to the browser.
       let detail = '';
       try { detail = (await response.json())?.error?.message || ''; } catch {}
-      console.error('Gemini API error:', response.status, detail, '| model:', MODEL);
+      console.error('Gemini API error:', response.status, detail, '| model:', usedModel);
       return json(502, { error: `The AI service returned an error (${response.status}). Please try again.` });
     }
 
