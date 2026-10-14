@@ -107,7 +107,7 @@ exports.handler = async (event) => {
     if (total > 5.4e6) return json(413, { error: 'Files are too large together.' });
 
     const m = rawData.match(/^data:([^;]+);base64,/);
-    const mimeType = f.type || f.mimeType || (m && m[1]) || 'application/pdf';
+    const mimeType = f.media_type || f.type || f.mimeType || (m && m[1]) || 'application/pdf';
     const cleanBase64 = rawData.replace(/^data:[^;]+;base64,/, '');
 
     parts.push({ inlineData: { mimeType, data: cleanBase64 } });
@@ -145,7 +145,9 @@ exports.handler = async (event) => {
 
     if (!response.ok) {
       // Log status only, never document content. Do not echo Gemini's raw error to the browser.
-      console.error('Gemini API error status:', response.status);
+      let detail = '';
+      try { detail = (await response.json())?.error?.message || ''; } catch {}
+      console.error('Gemini API error:', response.status, detail, '| model:', MODEL);
       return json(502, { error: `The AI service returned an error (${response.status}). Please try again.` });
     }
 
@@ -166,7 +168,7 @@ exports.handler = async (event) => {
       return json(502, { error: 'AI returned an unreadable result. Please try again.' });
     }
 
-    return json(200, structuredResult);
+    return json(200, { result: structuredResult });
   } catch (err) {
     console.error('Server error:', err.message);
     return json(500, { error: 'Server failed processing request.' });
