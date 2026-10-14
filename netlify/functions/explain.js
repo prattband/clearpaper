@@ -2,8 +2,10 @@
 // Keeps the API key off the browser, checks an access code, and forces a structured result.
 // Nothing is logged or stored here on purpose (documents may contain personal data).
 
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-const FALLBACK = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash';
+// Gemini 2.5 models now return 404 for new projects, so the defaults are the current models.
+// You can override them with the GEMINI_MODEL / GEMINI_FALLBACK_MODEL environment variables in Netlify.
+const MODEL = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+const FALLBACK = process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.5-flash-lite';
 const urlFor = (m) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`;
 
 const LANGS = {
@@ -122,20 +124,19 @@ exports.handler = async (event) => {
     text: `Please write all output fields in: ${LANGS[lang]}. Keep official terms, names, numbers and dates exactly as written in the notice. Return strictly valid JSON only.`
   });
 
-  // 3. Payload
+  // 3. Payload (no temperature: newer Gemini models deprecate it)
   const payload = {
     contents: [{ role: 'user', parts }],
     systemInstruction: { parts: [{ text: SYSTEM[mode] }] },
     generationConfig: {
       responseMimeType: 'application/json',
-      temperature: 0.2,
       maxOutputTokens: 8192
     }
   };
 
   // 4. Call Gemini (key goes in a header, never in the URL)
   try {
-    // Try the main model, then the fallback if Google is overloaded (503) or rate limiting (429).
+    // Try the main model, then the fallback if Google is overloaded (503), rate limiting (429) or the model is missing (404).
     let response;
     let usedModel = MODEL;
     for (const m of [MODEL, FALLBACK]) {
@@ -148,7 +149,7 @@ exports.handler = async (event) => {
         },
         body: JSON.stringify(payload)
       });
-      if (response.status !== 503 && response.status !== 429) break;
+      if (response.status !== 503 && response.status !== 429 && response.status !== 404) break;
       await new Promise((r) => setTimeout(r, 1000));
     }
 
