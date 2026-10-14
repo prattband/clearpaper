@@ -8,54 +8,80 @@ const API = `https://googleapis.com{MODEL}:generateContent`;
 const LANGS = { en: 'English', hi: 'Hindi (Devanagari script)', bn: 'Bengali', mr: 'Marathi', ta: 'Tamil' };
 const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
-// Fixed primitives to comply with standard Gemini API JSON schema casing rules
-const str = { type: 'STRING' };
-const int = { type: 'INTEGER' };
-
 const ACTION_SCHEMA = {
   type: 'OBJECT',
   properties: {
-    transcript: { ...str, description: 'Full text of the notice exactly as written, original language, reading order. Mark unreadable parts [illegible].' },
-    doc_type: { ...str, description: 'What kind of notice this is, in plain words (target language).' },
-    issuer: { ...str, description: 'Issuing office exactly as written in the notice.' },
-    one_line: { ...str, description: 'One or two plain sentences: what this notice is and what it wants from the person.' },
-    readability_warning: { ...str, description: 'Only if the document is blurry, partial, cut off, or not a notice. Otherwise omit.' },
+    transcript: { type: 'STRING', description: 'Full text of the notice exactly as written, original language, reading order. Mark unreadable parts [illegible].' },
+    doc_type: { type: 'STRING', description: 'What kind of notice this is, in plain words (target language).' },
+    issuer: { type: 'STRING', description: 'Issuing office exactly as written in the notice.' },
+    one_line: { type: 'STRING', description: 'One or two plain sentences: what this notice is and what it wants from the person.' },
+    readability_warning: { type: 'STRING', description: 'Only if the document is blurry, partial, cut off, or not a notice. Otherwise omit.' },
     actions: {
       type: 'ARRAY',
       description: 'What the person must do, in the order they should do it.',
       items: {
         type: 'OBJECT',
         properties: {
-          order: int,
-          action: { ...str, description: 'One concrete step, starting with a verb.' },
-          detail: { ...str, description: 'Where/how/with what, ONLY if stated in the notice.' },
-          deadline: { ...str, description: 'Deadline for this step exactly as the notice gives it. Omit if none.' },
+          order: { type: 'INTEGER' },
+          action: { type: 'STRING', description: 'One concrete step, starting with a verb.' },
+          detail: { type: 'STRING', description: 'Where/how/with what, ONLY if stated in the notice.' },
+          deadline: { type: 'STRING', description: 'Deadline for this step exactly as the notice gives it. Omit if none.' },
           certainty: { type: 'STRING', description: 'Must be one of: stated, depends, unclear' },
-          certainty_note: { ...str, description: 'Why it depends or is unclear (e.g. conditional wording, missing date).' },
-          source_quote: { ...str, description: 'Verbatim phrase (max 30 words) copied from the notice that supports this step.' }
+          certainty_note: { type: 'STRING', description: 'Why it depends or is unclear (e.g. conditional wording, missing date).' },
+          source_quote: { type: 'STRING', description: 'Verbatim phrase (max 30 words) copied from the notice that supports this step.' }
         },
         required: ['order', 'action', 'certainty']
       }
     },
     documents: {
       type: 'ARRAY',
-      items: { type: 'OBJECT', properties: { name: str, note: str }, required: ['name'] }
+      items: {
+        type: 'OBJECT',
+        properties: {
+          name: { type: 'STRING' },
+          note: { type: 'STRING' }
+        },
+        required: ['name']
+      }
     },
     key_dates: {
       type: 'ARRAY',
-      items: { type: 'OBJECT', properties: { label: str, date_text: str, note: str }, required: ['label', 'date_text'] }
+      items: {
+        type: 'OBJECT',
+        properties: {
+          label: { type: 'STRING' },
+          date_text: { type: 'STRING' },
+          note: { type: 'STRING' }
+        },
+        required: ['label', 'date_text']
+      }
     },
     unclear: {
       type: 'ARRAY',
       description: 'Things a person would need to know that the notice does NOT say or says ambiguously.',
-      items: { type: 'OBJECT', properties: { issue: str, ask_whom: str, suggested_question: str }, required: ['issue'] }
+      items: {
+        type: 'OBJECT',
+        properties: {
+          issue: { type: 'STRING' },
+          ask_whom: { type: 'STRING' },
+          suggested_question: { type: 'STRING' }
+        },
+        required: ['issue']
+      }
     },
     glossary: {
       type: 'ARRAY',
-      items: { type: 'OBJECT', properties: { official_term: str, plain_meaning: str }, required: ['official_term', 'plain_meaning'] }
+      items: {
+        type: 'OBJECT',
+        properties: {
+          official_term: { type: 'STRING' },
+          plain_meaning: { type: 'STRING' }
+        },
+        required: ['official_term', 'plain_meaning']
+      }
     },
-    if_not_done: { ...str, description: 'What the notice says happens if nothing is done. Keep "may"/"shall" strength. Omit if not stated.' },
-    help: { ...str, description: 'Appeal / representation / help route ONLY if the notice mentions one.' }
+    if_not_done: { type: 'STRING', description: 'What the notice says happens if nothing is done. Keep "may"/"shall" strength. Omit if not stated.' },
+    help: { type: 'STRING', description: 'Appeal / representation / help route ONLY if the notice mentions one.' }
   },
   required: ['transcript', 'one_line', 'actions']
 };
@@ -63,14 +89,14 @@ const ACTION_SCHEMA = {
 const TRANSLATION_SCHEMA = {
   type: 'OBJECT',
   properties: {
-    transcript: str,
+    transcript: { type: 'STRING' },
     pairs: {
       type: 'ARRAY',
       items: {
         type: 'OBJECT',
         properties: {
-          original: { ...str, description: 'One sentence or clause copied verbatim.' },
-          plain: { ...str, description: 'The same sentence in the target language in simple words.' }
+          original: { type: 'STRING', description: 'One sentence or clause copied verbatim.' },
+          plain: { type: 'STRING', description: 'The same sentence in the target language in simple words.' }
         },
         required: ['original', 'plain']
       }
@@ -131,21 +157,18 @@ exports.handler = async (event) => {
     for (const f of files) {
       if (!f) continue;
       
-      // Determine what property contains the actual file payload string
       const rawData = typeof f.data === 'string' ? f.data : (typeof f.base64 === 'string' ? f.base64 : '');
       if (!rawData) continue;
 
       total += rawData.length;
       if (total > 5.4e6) return json(413, { error: 'Files are too large together.' });
 
-      // Clean extract: strip out any prefix headers if the frontend attached them
       const cleanBase64 = rawData.replace(/^data:.+;base64,/, '');
       
-      // Figure out the correct MIME type safely
       let mime = f.mimeType || f.type || 'application/pdf';
       const typeMatch = rawData.match(/^data:(.+);base64,/);
-      if (typeMatch && typeMatch) {
-        mime = typeMatch;
+      if (typeMatch && typeMatch[1]) {
+        mime = typeMatch[1];
       }
 
       parts.push({
@@ -157,7 +180,6 @@ exports.handler = async (event) => {
     }
   }
 
-  // Ultimate fallback check: If parts array is still empty but text was somehow missed
   if (parts.length === 0 && event.body) {
     try {
       const rawBody = JSON.parse(event.body);
@@ -171,7 +193,6 @@ exports.handler = async (event) => {
     return json(400, { error: 'Provide text or at least one document file.' });
   }
 
-  // Target output language instruction
   parts.push({ text: `Please provide the output explanation translated into: ${LANGS[lang]}.` });
 
   // 3. Assemble the Gemini Request Payload
@@ -203,4 +224,3 @@ exports.handler = async (event) => {
 
     const data = await response.json();
     
-    // Extract the text output content string generated by Gemini
