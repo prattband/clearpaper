@@ -130,7 +130,7 @@ exports.handler = async (event) => {
     total += f.data.length;
     if (total > 5.4e6) return json(413, { error: 'Files are too large together.' });
 
-    // Handle incoming base64 formats (e.g., data:image/png;base64,iVBOR...)
+    // Handle incoming base64 formats correctly for Gemini
     const matches = f.data.match(/^data:(.+);base64,(.+)\$/);
     if (matches) {
       parts.push({
@@ -139,8 +139,15 @@ exports.handler = async (event) => {
           data: matches[2]
         }
       });
+    } else if (f.data && f.mimeType) {
+      parts.push({
+        inlineData: {
+          mimeType: f.mimeType,
+          data: f.data.replace(/^data:.+;base64,/, '')
+        }
+      });
     }
-  }
+  } // <-- Closes the file loop cleanly
 
   if (parts.length === 0) {
     return json(400, { error: 'Provide text or at least one document file.' });
